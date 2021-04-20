@@ -1,0 +1,71 @@
+Arborescence du projet Mandelbrot
+---------------------------------
+
+designs  : contient le projets FPGA Mandelbrot complets avec un fichier de premier niveau (top level).
+ips      : contient les IP réalisé par l'utilisateur.
+software : contient les sources des programmes C pour le SoPC MicroBlaze.
+hw       : contient toutes les sources HDL des projets ou des IP.
+vivado   : contient les projets vivado (designs ou ips).
+
+
+
+Mandelbrot
+├── designs
+│   ├── hw
+│   │   └── mandelbrot_pinout
+│   │       └── src
+│   │           ├── constrs
+│   │           ├── hdl
+│   │           ├── hdl_pkg
+│   │           ├── ip_core
+│   │           └── sim
+│   └── vivado
+│       └── mandelbrot_pinout
+│           └── 2018.2
+├── ips
+│   ├── hw
+│   │   ├── axi4lite
+│   │   │   ├── src
+│   │   │   │   ├── hdl
+│   │   │   │   └── sim
+│   │   │   └── xgui
+│   │   ├── cdc_sync
+│   │   │   └── src
+│   │   │       ├── hdl
+│   │   │       └── sim
+│   │   ├── fifo_ramb36e1
+│   │   │   └── src
+│   │   │       ├── hdl
+│   │   │       └── sim
+│   │   ├── hdmi
+│   │   │   └── src
+│   │   │       ├── hdl
+│   │   │       ├── hdl_pkg
+│   │   │       ├── ip_core
+│   │   │       └── sim
+│   │   ├── image_generator
+│   │   │   └── src
+│   │   │       ├── hdl
+│   │   │       └── sim
+│   │   └── ublaze
+│   │       ├── sim
+│   │       └── src
+│   │           ├── hdl
+│   │           ├── ip_core
+│   │           └── sim
+│   └── vivado
+│       ├── axi4lite
+│       │   └── 2018.2
+│       ├── cdc_sync
+│       │   └── 2018.2
+│       ├── fifo_ramb36e1
+│       │   └── 2018.2
+│       ├── hdmi
+│       │   └── 2018.2
+│       ├── image_generator
+│       │   └── 2018.2
+│       └── ublaze
+│           └── 2018.2
+└── software
+    └── complexe_generator
+        └── src
