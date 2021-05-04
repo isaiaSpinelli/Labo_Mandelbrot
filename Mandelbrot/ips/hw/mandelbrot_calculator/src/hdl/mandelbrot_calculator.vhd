@@ -66,8 +66,10 @@ architecture Behavioral of mandelbrot_calculator is
 -- constant Etat5_finish : Std_Logic_Vector(2 downto 0) := "101";
 
 -- NOUVELLE METHODE
-    type Etat is (idle, init, mul, add, test, finish );
+    type Etat is (idle, init, mul, add, calulD, test, finish );
 	signal Etat_present, Etat_futur : Etat := idle;
+	
+	signal ready_reg                   : std_logic := '1'; 
 
 	
 	
@@ -76,25 +78,33 @@ architecture Behavioral of mandelbrot_calculator is
     signal c_real_reg		   	       : std_logic_vector (SIZE-1 downto 0);
     signal c_imaginary_reg			   : std_logic_vector (SIZE-1 downto 0);
     
-    signal z_real_reg		   	       : std_logic_vector (SIZE-1 downto 0);
-    signal z_imaginary_reg			   : std_logic_vector (SIZE-1 downto 0);
-    signal iterations_reg			   : std_logic_vector (SIZE-1 downto 0);
-    
-    
+    signal z_real_reg		   	       : std_logic_vector (SIZE-1 downto 0) := (others => '0');
+    signal z_imaginary_reg			   : std_logic_vector (SIZE-1 downto 0) := (others => '0');
+
+
+	-- Gestion du compteur
+	signal iterations_reg			   : std_logic_vector (SIZE-1 downto 0);
+	
+    signal iterations_count_next	   : unsigned (SIZE-1 downto 0) := (others => '0');
+    signal iterations_count		       : unsigned (SIZE-1 downto 0) := (others => '0');
+    signal en_cpt_s 			       : std_logic := '0'; 
+    signal load_cpt_s 			       : std_logic := '0'; 
     
     --signal z_real_fut_reg		   	       : std_logic_vector (SIZE-1 downto 0);
     --signal z_imaginary_fut_reg			   : std_logic_vector (SIZE-1 downto 0);
     
-    signal z_real_carre		   	       : std_logic_vector ((SIZE*2)-1 downto 0);
-    signal Z_re_Z_im_2		   	       : std_logic_vector ((SIZE*2) downto 0);
-    signal Z_im_carre		   	       : std_logic_vector ((SIZE*2)-1 downto 0);
+    signal z_real_carre		   	       : std_logic_vector (SIZE-1 downto 0) := (others => '0');
+    signal Z_re_Z_im_2		   	       : std_logic_vector (SIZE-1 downto 0) := (others => '0');
+    signal Z_im_carre		   	       : std_logic_vector (SIZE-1 downto 0) := (others => '0');
     
-    signal D_s                          : std_logic_vector (SIZE-1 downto 0);
+    signal D_s                          : std_logic_vector (SIZE-1 downto 0) := (others => '0');
     
+	
 	
 	
 begin
 
+ready <= ready_reg;
 
 -- Reset ou met à jour l'état présent
 	Mem: process (clk, rst)
@@ -112,91 +122,77 @@ begin
 Fut: 
 process (start, Etat_Present)
 	-- (idle, init, mul, add, test, finish )
+	
+	-- Variables
+	variable z_real_carre_32 : std_logic_vector ((SIZE*2)-1 downto 0);
+	
+	
 	begin
 	-- valeurs par défaut
 		Etat_Futur <= idle;
 		finished <= '0';
-		ready <= '1';
+		ready_reg <= '0';
 		
 		save_info <= '0';
 		
+		load_cpt_s <= '0';
+		en_cpt_s <= '0';
 		
-		-- Besoin de
-		--z_real <= (others => '0');
-		--z_imaginary <= (others => '0');
-		--iterations <= (others => '0');
 		
 		case Etat_Present is
-		
+		      -- 0
 		      when idle =>
-                    finished <= '0';
-                    ready <= '1';
+		      
+		              ready_reg <= '1';
     
                     if (start = '1') then
                         Etat_Futur <= init;
                     else 
                         Etat_Futur <= idle;
                     end if;
-                    
-                
-
+            -- 1        
             when init =>
-                    finished <= '0';
-                    ready <= '0';
                     
                     -- save data
                     save_info <= '1';
-                    iterations_reg  <= (others => '0');
+                    load_cpt_s <= '1';
                     z_real_reg      <= (others => '0');
                     z_imaginary_reg <= (others => '0');
                 
                     Etat_Futur <= mul;
-                    
-                    
+            -- 2        
             when mul =>
-                    finished <= '0';
-                    ready <= '0';
-                    -- z_real_carre  Z_re_Z_im_2 Z_im_carre
-
-                    
+                                        
                     -- faire les multiplications
-                    z_real_carre      <= signed(z_real_reg) * signed(z_real_reg);
-                    -- p <= z_real_fut_reg(result_lowbit+result_width-1 downto result_lowbit) OR (SIZE downto 0);
                     
-                  
-                    Z_re_Z_im_2 <= (signed(z_real_reg) * signed(z_imaginary_reg)) & '0' ;
-                    --Z_re_Z_im_2 <= Z_re_Z_im_2(SIZE downto 0) & '0';
-                    
-                    
-                    Z_im_carre <= - (signed(z_imaginary_reg) * signed(z_real_reg));
+                    z_real_carre        <= conv_std_logic_vector((signed(z_real_reg) * signed(z_real_reg)), SIZE*2)((SIZE*2)-1-4 downto 16-4);
+                    Z_re_Z_im_2         <= conv_std_logic_vector(((signed(z_real_reg) * signed(z_imaginary_reg)) & '0'), SIZE*2)((SIZE*2)-1-4 downto 16-4);
+                    Z_im_carre          <= conv_std_logic_vector((- (signed(z_imaginary_reg) * signed(z_imaginary_reg))), SIZE*2)((SIZE*2)-1-4 downto 16-4);
                 
                     Etat_Futur <= add;
-                    
-                    
+              -- 3      
               when add =>
-                    finished <= '0';
-                    ready <= '0';
                     
-                    iterations_reg  <= unsigned(iterations_reg) + 1;
+                    en_cpt_s <= '1';
                     z_real_reg      <= conv_std_logic_vector((signed(z_real_carre) + signed(Z_re_Z_im_2) + signed(c_real_reg)), SIZE) ;
                     z_imaginary_reg <= conv_std_logic_vector(signed(Z_im_carre) + signed(c_imaginary_reg), SIZE);
-                     
+                
+                    Etat_Futur <= calulD;
+             -- 4      
+             when calulD =>
+                                  
                     D_s             <= signed(z_real_reg) + signed(z_imaginary_reg);
                 
                     Etat_Futur <= test;
-                    
-                    
-                    
+            -- 5        
             when test =>
-                    finished <= '0';
-                    ready <= '0';
-
-                
-                    if (D_s >= "100") then
+                    
+                    if (D_s >= "0100000000000000") then --  "0100000000000000" = 4 (Rayon^2)
                         Etat_Futur <= finish;
                     else 
-                        if (iterations_reg >= "1100100") then
-                            iterations_reg <= (others => '0');
+                        -- TODO : Change constante to mxx_iter generique param
+                        if (iterations_reg >= "0000000001100100") then -- "0000000001100100" = 100 iterations
+                            load_cpt_s <= '1';
                             Etat_Futur <= finish;
                         else 
                             Etat_Futur <= mul;
@@ -204,25 +200,20 @@ process (start, Etat_Present)
                     end if;
                     
                     
-                    
                when finish =>
                     finished <= '1';
-                    ready <= '0';
+                    ready_reg <= '1';
                 
                     Etat_Futur <= idle;
-               
-                    
                     
             when others =>
 				Etat_Futur <= idle;
-				finished <= '0';
-                ready <= '1';
 			end case ;
 			
 end process Fut;
 		
 		
--- Registre pour la lecture sychro
+-- Registre pour la lecture sychro (entrées)
 process(clk, rst)
 begin
 	if(rst = '1') then
@@ -236,21 +227,39 @@ begin
 	end if;
 end process;
 
--- Registre l'ecriture sychro
+-- Registre pour l'ecriture sychro (sorties)
 process(clk, rst)
 begin
 	if(rst = '1') then
-		iterations  <= (others => '0');
 		z_real      <= (others => '0');
 		z_imaginary <= (others => '0');
 	elsif(rising_edge(Clk)) then
-		iterations    <= iterations_reg;
 		z_real        <= z_real_reg;
 		z_imaginary   <= z_imaginary_reg;
 	end if;
 end process;
 
 
+
+
+-- Compteur iterations (+1)
+iterations_count_next <= iterations_count + 1;
+
+process(clk, rst)
+begin
+	if(rst = '1') then
+		iterations_count <= (others => '0');
+	elsif(rising_edge(Clk)) then
+		if(load_cpt_s = '1') then
+			iterations_count <= (others => '0');
+		elsif (en_cpt_s = '1') then
+			iterations_count <= iterations_count_next;
+		end if;
+	end if;
+end process;
+
+iterations_reg  <=  std_logic_vector(iterations_count(SIZE-1 downto 0));
+iterations      <= std_logic_vector(iterations_count(SIZE-1 downto 0));
 
 
 end Behavioral;
