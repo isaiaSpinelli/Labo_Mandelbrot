@@ -464,39 +464,39 @@ begin  -- architecture rtl
                 C_PIXEL_SIZE => C_PIXEL_SIZE,
                 C_VGA_CONFIG => C_VGA_CONFIG)
             port map (
-                ClkVgaxCI    => ClkVgaxC ,            --ClkMandelxC,     ClkVgaxC
-                RstxRAI      => HdmiPllNotLockedxS,  --PllNotLockedxS,      HdmiPllNotLockedxS
-                PllLockedxSI => HdmiPllLockedxS,     --PllLockedxD(0),      HdmiPllLockedxS
-                HCountxDI    => HCountxD,            --HCountIntxD,         HCountxD
-                VCountxDI    => VCountxD,            --VCountIntxD,         VCountxD
-                VidOnxSI     => VidOnxS,             --'1',                 VidOnxS
+                ClkVgaxCI    => ClkMandelxC ,            --ClkMandelxC,     ClkVgaxC
+                RstxRAI      => PllNotLockedxS,  --PllNotLockedxS,      HdmiPllNotLockedxS
+                PllLockedxSI => PllLockedxD(0),     --PllLockedxD(0),      HdmiPllLockedxS
+                HCountxDI    => HCountIntxD,            --HCountIntxD,         HCountxD
+                VCountxDI    => VCountIntxD,            --VCountIntxD,         VCountxD
+                VidOnxSI     => '1',             --'1',                 VidOnxS
                 DataxDO      => DataImGen2BramMVxD,    --DataImGen2BramMVxD,  DataImGen2HDMIxD
                 Color1xDI    => RdDataFlagColor1xDP(((C_PIXEL_SIZE * 3) - 1) downto 0));
 
-        -- HVCountIntxP : process (all) is
-        -- begin  -- process HVCountxP
+         HVCountIntxP : process (all) is
+         begin  -- process HVCountxP
 
-        --     if PllNotLockedxS = '1' then
-        --         HCountIntxD <= (others => '0');
-        --         VCountIntxD <= (others => '0');
-        --     elsif rising_edge(ClkMandelxC) then
-        --         HCountIntxD <= HCountIntxD;
-        --         VCountIntxD <= VCountIntxD;
+             if PllNotLockedxS = '1' then
+                 HCountIntxD <= (others => '0');
+                 VCountIntxD <= (others => '0');
+             elsif rising_edge(ClkMandelxC) then
+                 HCountIntxD <= HCountIntxD;
+                 VCountIntxD <= VCountIntxD;
 
-        --         if unsigned(HCountIntxD) = (C_VGA_CONFIG.HActivexD - 1) then
-        --             HCountIntxD <= (others => '0');
+                 if unsigned(HCountIntxD) = (C_VGA_CONFIG.HActivexD - 1) then
+                     HCountIntxD <= (others => '0');
 
-        --             if unsigned(VCountIntxD) = (C_VGA_CONFIG.VActivexD - 1) then
-        --                 VCountIntxD <= (others => '0');
-        --             else
-        --                 VCountIntxD <= std_logic_vector(unsigned(VCountIntxD) + 1);
-        --             end if;
-        --         else
-        --             HCountIntxD <= std_logic_vector(unsigned(HCountIntxD) + 1);
-        --         end if;
-        --     end if;
+                     if unsigned(VCountIntxD) = (C_VGA_CONFIG.VActivexD - 1) then
+                         VCountIntxD <= (others => '0');
+                     else
+                         VCountIntxD <= std_logic_vector(unsigned(VCountIntxD) + 1);
+                     end if;
+                 else
+                     HCountIntxD <= std_logic_vector(unsigned(HCountIntxD) + 1);
+                 end if;
+             end if;
 
-        -- end process HVCountIntxP;
+         end process HVCountIntxP;
 
     end block FpgaUserCDxB;
 
