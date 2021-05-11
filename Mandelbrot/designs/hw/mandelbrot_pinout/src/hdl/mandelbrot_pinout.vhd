@@ -365,12 +365,12 @@ begin  -- architecture rtl
     VgaHdmiCDxB : block is
     begin  -- block VgaHdmiCDxB
 
-        -- DataBramMV2HdmixAS : DataBramMV2HdmixD <= BramVideoMemoryReadDataxD(8 downto 6) & "00000" &
-        --                                           BramVideoMemoryReadDataxD(5 downto 3) & "00000" &
-        --                                           BramVideoMemoryReadDataxD(2 downto 0) & "00000";
+         DataBramMV2HdmixAS : DataBramMV2HdmixD <= BramVideoMemoryReadDataxD(8 downto 6) & "00000" &
+                                                   BramVideoMemoryReadDataxD(5 downto 3) & "00000" &
+                                                   BramVideoMemoryReadDataxD(2 downto 0) & "00000";
 
-        -- BramVMRdAddrxAS : BramVideoMemoryReadAddrxD <= VCountxD((C_BRAM_VIDEO_MEMORY_HIGH_ADDR_SIZE - 1) downto 0) &
-        --                                                HCountxD((C_BRAM_VIDEO_MEMORY_LOW_ADDR_SIZE - 1) downto 0);
+         BramVMRdAddrxAS : BramVideoMemoryReadAddrxD <= VCountxD((C_BRAM_VIDEO_MEMORY_HIGH_ADDR_SIZE - 1) downto 0) &
+                                                        HCountxD((C_BRAM_VIDEO_MEMORY_LOW_ADDR_SIZE - 1) downto 0);
 
         HdmiPllNotLockedxAS : HdmiPllNotLockedxS <= not HdmiPllLockedxS;
 
@@ -389,8 +389,8 @@ begin  -- architecture rtl
                 ClkVgaxCO       => ClkVgaxC,
                 HCountxDO       => HCountxD,
                 VCountxDO       => VCountxD,
-                VidOnxSO        => VidOnxS,           --open,
-                DataxDI         => DataImGen2HDMIxD,  --DataBramMV2HdmixD,
+                VidOnxSO        => open,           --open, VidOnxS
+                DataxDI         => DataBramMV2HdmixD,  --DataBramMV2HdmixD, DataImGen2HDMIxD
                 HdmiTxRsclxSO   => HdmiSourcexD.HdmiSourceOutxD.HdmiTxRsclxS,
                 HdmiTxRsdaxSIO  => HdmiSourcexD.HdmiSourceInOutxS.HdmiTxRsdaxS,
                 HdmiTxHpdxSI    => HdmiSourcexD.HdmiSourceInxS.HdmiTxHpdxS,
@@ -470,7 +470,7 @@ begin  -- architecture rtl
                 HCountxDI    => HCountxD,            --HCountIntxD,         HCountxD
                 VCountxDI    => VCountxD,            --VCountIntxD,         VCountxD
                 VidOnxSI     => VidOnxS,             --'1',                 VidOnxS
-                DataxDO      => DataImGen2HDMIxD,    --DataImGen2BramMVxD,  DataImGen2HDMIxD
+                DataxDO      => DataImGen2BramMVxD,    --DataImGen2BramMVxD,  DataImGen2HDMIxD
                 Color1xDI    => RdDataFlagColor1xDP(((C_PIXEL_SIZE * 3) - 1) downto 0));
 
         -- HVCountIntxP : process (all) is
