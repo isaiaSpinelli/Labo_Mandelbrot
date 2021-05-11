@@ -187,6 +187,42 @@ architecture rtl of mandelbrot_pinout is
              dinb  : in  std_logic_vector(8 downto 0);
              doutb : out std_logic_vector(8 downto 0));
      end component;
+     
+     
+     component c_gen is
+        generic (
+            C_FXP_SIZE   : integer ;
+            C_X_SIZE     : integer ;
+            C_Y_SIZE     : integer ;
+            C_SCREEN_RES : integer );
+        port (
+            ClkxC         : in  std_logic;
+            RstxRA        : in  std_logic;
+            ZoomInxSI     : in  std_logic;
+            ZoomOutxSI    : in  std_logic;
+            CRealxDO      : out std_logic_vector((C_FXP_SIZE - 1) downto 0);
+            CImaginaryxDO : out std_logic_vector((C_FXP_SIZE - 1) downto 0);
+            XScreenxDO    : out std_logic_vector((C_SCREEN_RES - 1) downto 0);
+            YScreenxDO    : out std_logic_vector((C_SCREEN_RES - 1) downto 0));
+    end component c_gen;
+    
+    component mandelbrot_calculator is
+        generic (   
+            comma       : integer; -- nombre de bits après la virgule
+            max_iter    : integer;
+            SIZE        : integer);
+        Port ( 
+            clk : in STD_LOGIC;
+            rst : in STD_LOGIC;
+            ready : out STD_LOGIC;
+            start : in STD_LOGIC;
+            finished : out STD_LOGIC;
+            c_real : in STD_LOGIC_VECTOR (SIZE-1 downto 0);
+            c_imaginary : in STD_LOGIC_VECTOR (SIZE-1 downto 0);
+            z_real : out STD_LOGIC_VECTOR (SIZE-1 downto 0);
+            z_imaginary : out STD_LOGIC_VECTOR (SIZE-1 downto 0);
+            iterations : out STD_LOGIC_VECTOR (SIZE-1 downto 0));
+    end component mandelbrot_calculator;
 
     component fifo_regport
         port (
@@ -277,6 +313,23 @@ architecture rtl of mandelbrot_pinout is
     signal FlagColor1RegPortxDN : std_logic_vector((C_AXI4_DATA_SIZE - 1) downto 0) := (others => '0');
     signal FlagColor2RegPortxDN : std_logic_vector((C_AXI4_DATA_SIZE - 1) downto 0) := (others => '0');
     signal FlagColor3RegPortxDN : std_logic_vector((C_AXI4_DATA_SIZE - 1) downto 0) := (others => '0');
+    
+    
+    signal CReal_s              : std_logic_vector((C_DATA_SIZE - 1) downto 0);
+    signal CImaginary_s         : std_logic_vector((C_DATA_SIZE - 1) downto 0);
+    signal XScreen_s            : std_logic_vector((C_PIXEL_SIZE - 1) downto 0);
+    signal YScreen_s            : std_logic_vector((C_PIXEL_SIZE - 1) downto 0);
+    
+    
+    signal ready_s              : std_logic  ;
+    signal start_s              : std_logic  := '0';
+    signal finished_s           : std_logic  ;
+    signal z_real_s             : std_logic_vector((C_DATA_SIZE - 1) downto 0);
+    signal z_imaginary_s        : std_logic_vector((C_DATA_SIZE - 1) downto 0);
+    -- TODO : no need C_DATA_SIZE bits
+    signal iterations_s         : std_logic_vector((C_DATA_SIZE - 1) downto 0);
+
+    
 
 begin  -- architecture rtl
 
@@ -472,7 +525,42 @@ begin  -- architecture rtl
                 VidOnxSI     => '1',             --'1',                 VidOnxS
                 DataxDO      => DataImGen2BramMVxD,    --DataImGen2BramMVxD,  DataImGen2HDMIxD
                 Color1xDI    => RdDataFlagColor1xDP(((C_PIXEL_SIZE * 3) - 1) downto 0));
+                
+        c_gen : entity work.c_gen
+            generic map (
+                C_FXP_SIZE   => C_DATA_SIZE,
+                C_X_SIZE     => 1024 , -- TODO change with constante
+                C_Y_SIZE     => 768 ,  -- TODO change with constante
+                C_SCREEN_RES => C_PIXEL_SIZE  )  -- TODO what res ? C_PIXEL_SIZE ou 11 ..
+            port map (
+                ClkxC         => ClkMandelxC ,
+                RstxRA        => PllNotLockedxS ,
+                ZoomInxSI     => '0' , 
+                ZoomOutxSI    => '0' , 
+                CRealxDO      => CReal_s ,
+                CImaginaryxDO => CImaginary_s ,
+                XScreenxDO    => XScreen_s ,
+                YScreenxDO    => YScreen_s);
+                
+                
+        mandelbrot_calculator : entity work.mandelbrot_calculator
+            generic map (
+                comma           => 12,
+                max_iter        => 100 , 
+                SIZE            => C_DATA_SIZE  )  
+            port map (
+                clk             => ClkMandelxC ,
+                rst             => PllNotLockedxS ,
+                ready           => ready_s , 
+                start           => start_s ,
+                finished        => finished_s ,
+                c_real          => CReal_s ,
+                c_imaginary     => CImaginary_s ,
+                z_real          => z_real_s ,
+                z_imaginary     => z_imaginary_s ,
+                iterations      => iterations_s);
 
+            
          HVCountIntxP : process (all) is
          begin  -- process HVCountxP
 
