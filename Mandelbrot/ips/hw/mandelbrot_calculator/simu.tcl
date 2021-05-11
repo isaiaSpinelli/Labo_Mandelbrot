@@ -34,4 +34,8 @@ run 20 ns
 add_force {/mandelbrot_calculator/start} -radix hex {0 0ns}
 
 run 20 ns
-
+run 20 ns
+run 20 ns
+run 20 ns
+run 20 ns
+run 20 ns
