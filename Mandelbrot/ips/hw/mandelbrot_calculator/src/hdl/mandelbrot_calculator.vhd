@@ -192,7 +192,7 @@ process (start, Etat_Present)
                     else 
                         -- TODO : Change constante to mxx_iter generique param
                         if (iterations_reg >= "0000000001100100") then -- "0000000001100100" = 100 iterations
-                            load_cpt_s <= '1';
+                            -- load_cpt_s <= '1';
                             Etat_Futur <= finish;
                         else 
                             Etat_Futur <= mul;

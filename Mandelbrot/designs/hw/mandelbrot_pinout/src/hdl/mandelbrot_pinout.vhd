@@ -206,6 +206,14 @@ architecture rtl of mandelbrot_pinout is
             YScreenxDO    : out std_logic_vector((C_SCREEN_RES - 1) downto 0));
     end component c_gen;
     
+    component mss_cgen_calcul is
+        Port ( clk : in STD_LOGIC;
+               rst : in STD_LOGIC;
+               ready : in STD_LOGIC;
+               start : out STD_LOGIC;
+               nextValue : out STD_LOGIC);
+    end component mss_cgen_calcul;
+    
     component mandelbrot_calculator is
         generic (   
             comma       : integer; -- nombre de bits après la virgule
@@ -317,10 +325,11 @@ architecture rtl of mandelbrot_pinout is
     
     signal CReal_s              : std_logic_vector((C_DATA_SIZE - 1) downto 0);
     signal CImaginary_s         : std_logic_vector((C_DATA_SIZE - 1) downto 0);
-    signal XScreen_s            : std_logic_vector((C_PIXEL_SIZE - 1) downto 0);
-    signal YScreen_s            : std_logic_vector((C_PIXEL_SIZE - 1) downto 0);
+    signal XScreen_s            : std_logic_vector((C_DATA_SIZE - 1) downto 0);
+    signal YScreen_s            : std_logic_vector((C_DATA_SIZE - 1) downto 0);
     
-    
+    signal nextValue_s              : std_logic  ;
+  
     signal ready_s              : std_logic  ;
     signal start_s              : std_logic  := '0';
     signal finished_s           : std_logic  ;
@@ -465,7 +474,7 @@ begin  -- architecture rtl
              port map (
                  -- Port A (Write)
                  clka  => ClkMandelxC,
-                 wea   => PllLockedxD,
+                 wea(0)   => finished_s, -- PllLockedxD or  wea(0)   => finished_s
                  addra => BramVideoMemoryWriteAddrxD,
                  dina  => BramVideoMemoryWriteDataxD,
                  douta => open,
@@ -492,13 +501,19 @@ begin  -- architecture rtl
          PllNotLockedxAS : PllNotLockedxS <= not PllLockedxS;
          PllLockedxAS    : PllLockedxD(0) <= PllLockedxS;
 
-         BramVideoMemoryWriteDataxAS : BramVideoMemoryWriteDataxD <= DataImGen2BramMVxD(23 downto 21) &
-                                                                     DataImGen2BramMVxD(15 downto 13) &
-                                                                     DataImGen2BramMVxD(7 downto 5);
+--         BramVideoMemoryWriteDataxAS : BramVideoMemoryWriteDataxD <= DataImGen2BramMVxD(23 downto 21) &
+--                                                                     DataImGen2BramMVxD(15 downto 13) &
+--                                                                     DataImGen2BramMVxD(7 downto 5);
+                                                                     
+                                                                     
+           BramVideoMemoryWriteDataxAS : BramVideoMemoryWriteDataxD <=   iterations_s((C_BRAM_VIDEO_MEMORY_DATA_SIZE - 1) downto 0);                                                  
+                                                                     
 
-         BramVMWrAddrxAS : BramVideoMemoryWriteAddrxD <= VCountIntxD((C_BRAM_VIDEO_MEMORY_HIGH_ADDR_SIZE - 1) downto 0) &
-                                                         HCountIntxD((C_BRAM_VIDEO_MEMORY_LOW_ADDR_SIZE - 1) downto 0);
-
+--         BramVMWrAddrxAS : BramVideoMemoryWriteAddrxD <= VCountIntxD((C_BRAM_VIDEO_MEMORY_HIGH_ADDR_SIZE - 1) downto 0) &
+--                                                         HCountIntxD((C_BRAM_VIDEO_MEMORY_LOW_ADDR_SIZE - 1) downto 0);
+                                                         
+            BramVMWrAddrxAS : BramVideoMemoryWriteAddrxD <= std_logic_vector((unsigned(YScreen_s((C_BRAM_VIDEO_MEMORY_HIGH_ADDR_SIZE - 1) downto 0) & XScreen_s((C_BRAM_VIDEO_MEMORY_LOW_ADDR_SIZE - 1) downto 0))) - 1);
+                                                         
          BUFGClkSysToClkMandelxI : BUFG
              port map (
                  O => ClkSys100MhzBufgxC,
@@ -531,16 +546,30 @@ begin  -- architecture rtl
                 C_FXP_SIZE   => C_DATA_SIZE,
                 C_X_SIZE     => 1024 , -- TODO change with constante
                 C_Y_SIZE     => 768 ,  -- TODO change with constante
-                C_SCREEN_RES => C_PIXEL_SIZE  )  -- TODO what res ? C_PIXEL_SIZE ou 11 ..
+                C_SCREEN_RES => C_DATA_SIZE  )  -- TODO what res ? C_PIXEL_SIZE ou 11 ..
             port map (
                 ClkxC         => ClkMandelxC ,
                 RstxRA        => PllNotLockedxS ,
                 ZoomInxSI     => '0' , 
                 ZoomOutxSI    => '0' , 
+                nextValue     => nextValue_s,
                 CRealxDO      => CReal_s ,
                 CImaginaryxDO => CImaginary_s ,
                 XScreenxDO    => XScreen_s ,
                 YScreenxDO    => YScreen_s);
+                
+                
+                
+                
+                
+        mss_cgen_calcul : entity work.mss_cgen_calcul
+            port map (
+                clk             => ClkMandelxC ,
+                rst             => PllNotLockedxS ,
+                ready           => ready_s , 
+                start           => start_s , 
+                nextValue       => nextValue_s);
+                
                 
                 
         mandelbrot_calculator : entity work.mandelbrot_calculator
