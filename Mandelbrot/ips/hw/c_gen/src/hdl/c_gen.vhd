@@ -38,6 +38,7 @@ entity c_gen is
         RstxRA        : in  std_logic;
         ZoomInxSI     : in  std_logic;
         ZoomOutxSI    : in  std_logic;
+		nextValue     : in  std_logic;
         CRealxDO      : out std_logic_vector((C_FXP_SIZE - 1) downto 0);
         CImaginaryxDO : out std_logic_vector((C_FXP_SIZE - 1) downto 0);
         XScreenxDO    : out std_logic_vector((C_SCREEN_RES - 1) downto 0);
@@ -135,7 +136,7 @@ begin  -- architecture behavioral
             port map (
                 clk           => ClkxC,
                 reset         => RstxRA,
-                next_value    => '1',
+                next_value    => nextValue,
                 c_inc_RE      => CIncReIxD,
                 c_inc_IM      => CIncImIxD,
                 c_top_left_RE => CTopLeftReIxD,
