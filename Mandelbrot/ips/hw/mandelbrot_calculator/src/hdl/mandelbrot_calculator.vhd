@@ -78,8 +78,10 @@ architecture Behavioral of mandelbrot_calculator is
     signal c_real_reg		   	       : std_logic_vector (SIZE-1 downto 0);
     signal c_imaginary_reg			   : std_logic_vector (SIZE-1 downto 0);
     
-    signal z_real_reg		   	       : std_logic_vector (SIZE-1 downto 0) := (others => '0');
-    signal z_imaginary_reg			   : std_logic_vector (SIZE-1 downto 0) := (others => '0');
+    signal z_real_reg		   	       : std_logic_vector (SIZE+1 downto 0);
+    signal z_imaginary_reg			   : std_logic_vector (SIZE downto 0);
+    signal z_real_reg_p		   	       : std_logic_vector (SIZE+1 downto 0);
+    signal z_imaginary_reg_p			   : std_logic_vector (SIZE downto 0);
 
 
 	-- Gestion du compteur
@@ -93,14 +95,55 @@ architecture Behavioral of mandelbrot_calculator is
     --signal z_real_fut_reg		   	       : std_logic_vector (SIZE-1 downto 0);
     --signal z_imaginary_fut_reg			   : std_logic_vector (SIZE-1 downto 0);
     
-    signal z_real_carre		   	       : std_logic_vector (SIZE-1 downto 0) := (others => '0');
-    signal Z_re_Z_im_2		   	       : std_logic_vector (SIZE-1 downto 0) := (others => '0');
-    signal Z_im_carre		   	       : std_logic_vector (SIZE-1 downto 0) := (others => '0');
+    signal z_real_carre		   	       : std_logic_vector (SIZE-1 downto 0) ;
+    signal Z_re_Z_im_2		   	       : std_logic_vector (SIZE-1 downto 0) ;
+    signal Z_im_carre		   	       : std_logic_vector (SIZE-1 downto 0) ;
+    signal z_real_carre_p		   	       : std_logic_vector (SIZE-1 downto 0) ;
+    signal Z_re_Z_im_2_p		   	       : std_logic_vector (SIZE-1 downto 0) ;
+    signal Z_im_carre_p		   	       : std_logic_vector (SIZE-1 downto 0) ;
     
-    signal D_s                          : std_logic_vector (SIZE-1 downto 0) := (others => '0');
+    signal D_s                          : std_logic_vector (SIZE+3 downto 0) ;
+    signal D_s_p                          : std_logic_vector (SIZE+3 downto 0) ;
+
     
 	
-	
+	attribute mark_debug                                    : string;
+    attribute mark_debug of Etat_present                    : signal is "true";
+    attribute mark_debug of Etat_futur                      : signal is "true";
+    attribute mark_debug of rst                             : signal is "true";
+    
+    attribute mark_debug of save_info                       : signal is "true";
+    attribute mark_debug of c_real_reg                      : signal is "true";
+    attribute mark_debug of c_imaginary_reg                 : signal is "true";
+    attribute mark_debug of z_real_reg                      : signal is "true";
+    attribute mark_debug of z_imaginary_reg                 : signal is "true";
+    
+    attribute mark_debug of iterations_reg                  : signal is "true";
+    attribute mark_debug of en_cpt_s                        : signal is "true";
+    attribute mark_debug of load_cpt_s                      : signal is "true";
+    attribute mark_debug of z_real_carre                    : signal is "true";
+    attribute mark_debug of Z_re_Z_im_2                     : signal is "true";
+    attribute mark_debug of Z_im_carre                      : signal is "true";
+    attribute mark_debug of D_s                             : signal is "true";
+    
+    attribute keep                                      : string;
+    attribute keep of Etat_present                      : signal is "true";
+    attribute keep of Etat_futur                        : signal is "true";
+    attribute keep of rst                               : signal is "true";
+    
+    attribute keep of save_info                         : signal is "true";
+    attribute keep of c_real_reg                        : signal is "true";
+    attribute keep of c_imaginary_reg                   : signal is "true";
+    attribute keep of z_real_reg                        : signal is "true";
+    attribute keep of z_imaginary_reg                   : signal is "true";
+    
+    attribute keep of iterations_reg                    : signal is "true";
+    attribute keep of en_cpt_s                          : signal is "true";
+    attribute keep of load_cpt_s                        : signal is "true";
+    attribute keep of z_real_carre                      : signal is "true";
+    attribute keep of Z_re_Z_im_2                       : signal is "true";
+    attribute keep of Z_im_carre                        : signal is "true";
+    attribute keep of D_s                               : signal is "true";
 	
 begin
 
@@ -113,6 +156,13 @@ ready <= ready_reg;
 			Etat_Present <= idle;
 		elsif rising_edge(clk) then
 			Etat_Present <= Etat_Futur;
+			
+			z_real_reg_p <= z_real_reg;
+            z_imaginary_reg_p <= z_imaginary_reg; 
+            z_real_carre_p <= z_real_carre;	
+            Z_re_Z_im_2_p <= Z_re_Z_im_2;	
+            Z_im_carre_p <= Z_im_carre;
+            D_s_p <= D_s;
 		end if;
 	end process;
 	
@@ -120,7 +170,7 @@ ready <= ready_reg;
 -- Gestion des sorties en fonction de l'état présent
 -- Gestion des états futurs en fonction des entrées (sauf etat 4)
 Fut: 
-process (start, Etat_Present)
+process (start, Etat_Present,z_real_reg_p,z_imaginary_reg_p,z_real_carre_p,Z_re_Z_im_2_p,Z_im_carre_p,D_s_p ) -- all / start, Etat_Present
 	-- (idle, init, mul, add, test, finish )
 	
 	-- Variables
@@ -138,12 +188,19 @@ process (start, Etat_Present)
 		load_cpt_s <= '0';
 		en_cpt_s <= '0';
 		
+		-- garde son etat
+        z_real_reg <= z_real_reg_p;
+        z_imaginary_reg <= z_imaginary_reg_p; 
+        z_real_carre <= z_real_carre_p;	
+        Z_re_Z_im_2 <= Z_re_Z_im_2_p;	
+        Z_im_carre <= Z_im_carre_p;
+        D_s <= D_s_p;
 		
 		case Etat_Present is
 		      -- 0
 		      when idle =>
 		      
-		              ready_reg <= '1';
+		            ready_reg <= '1';
     
                     if (start = '1') then
                         Etat_Futur <= init;
@@ -165,34 +222,34 @@ process (start, Etat_Present)
                                         
                     -- faire les multiplications
                     
-                    z_real_carre        <= conv_std_logic_vector((signed(z_real_reg) * signed(z_real_reg)), SIZE*2)((SIZE*2)-1-4 downto 16-4);
-                    Z_re_Z_im_2         <= conv_std_logic_vector(((signed(z_real_reg) * signed(z_imaginary_reg)) & '0'), SIZE*2)((SIZE*2)-1-4 downto 16-4);
-                    Z_im_carre          <= conv_std_logic_vector((- (signed(z_imaginary_reg) * signed(z_imaginary_reg))), SIZE*2)((SIZE*2)-1-4 downto 16-4);
+                    z_real_carre        <= conv_std_logic_vector((signed(z_real_reg_p) * signed(z_real_reg_p)), SIZE*2)((SIZE*2)-1-4 downto 16-4);
+                    Z_re_Z_im_2         <= conv_std_logic_vector(((signed(z_real_reg_p) * signed(z_imaginary_reg_p)) & '0'), SIZE*2)((SIZE*2)-1-4 downto 16-4);
+                    Z_im_carre          <= conv_std_logic_vector((- (signed(z_imaginary_reg_p) * signed(z_imaginary_reg_p))), SIZE*2)((SIZE*2)-1-4 downto 16-4);
                 
                     Etat_Futur <= add;
               -- 3      
               when add =>
                     
                     en_cpt_s <= '1';
-                    z_real_reg      <= conv_std_logic_vector((signed(z_real_carre) + signed(Z_re_Z_im_2) + signed(c_real_reg)), SIZE) ;
-                    z_imaginary_reg <= conv_std_logic_vector(signed(Z_im_carre) + signed(c_imaginary_reg), SIZE);
+                    z_real_reg      <= conv_std_logic_vector((signed(z_real_carre_p) + signed(Z_im_carre_p ) + signed(c_real_reg)), SIZE+2) ;
+                    z_imaginary_reg <= conv_std_logic_vector(signed(Z_re_Z_im_2_p) + signed(c_imaginary), SIZE+1);
                 
                     Etat_Futur <= calulD;
              -- 4      
              when calulD =>
                                   
-                    D_s             <= signed(z_real_reg) + signed(z_imaginary_reg);
+                    D_s             <= conv_std_logic_vector((signed(z_real_reg_p) + signed(z_imaginary_reg_p)), SIZE+4 );
                 
                     Etat_Futur <= test;
             -- 5        
             when test =>
                     
-                    if (D_s >= "0100000000000000") then --  "0100000000000000" = 4 (Rayon^2)
+                    if (D_s_p >= "00000100000000000000") then --  "0100000000000000" = 4 (Rayon^2)
                         Etat_Futur <= finish;
                     else 
                         -- TODO : Change constante to mxx_iter generique param
                         if (iterations_reg >= "0000000001100100") then -- "0000000001100100" = 100 iterations
-                            -- load_cpt_s <= '1';
+                            load_cpt_s <= '1'; -- retourne 0 
                             Etat_Futur <= finish;
                         else 
                             Etat_Futur <= mul;
@@ -200,7 +257,7 @@ process (start, Etat_Present)
                     end if;
                     
                     
-               when finish =>
+           when finish =>
                     finished <= '1';
                     ready_reg <= '1';
                 
@@ -234,8 +291,8 @@ begin
 		z_real      <= (others => '0');
 		z_imaginary <= (others => '0');
 	elsif(rising_edge(Clk)) then
-		z_real        <= z_real_reg;
-		z_imaginary   <= z_imaginary_reg;
+		z_real        <= z_real_reg(SIZE-1 downto 0);
+		z_imaginary   <= z_imaginary_reg(SIZE-1 downto 0);
 	end if;
 end process;
 
