@@ -343,9 +343,7 @@ architecture rtl of mandelbrot_pinout is
 
     --     -- Attributes
          attribute mark_debug                                 : string;
-         attribute mark_debug of ClkMandelxC                  : signal is "true";
-         attribute mark_debug of PllNotLockedxS               : signal is "true";
-         
+		 
          attribute mark_debug of ready_s                      : signal is "true";
          attribute mark_debug of start_s                      : signal is "true";
          attribute mark_debug of finished_s                   : signal is "true";
@@ -370,10 +368,6 @@ architecture rtl of mandelbrot_pinout is
 
 
          attribute keep                                  : string;
-
-         attribute keep of ClkMandelxC                   : signal is "true";
-         attribute keep of PllNotLockedxS                : signal is "true";
-         
          attribute keep of ready_s                       : signal is "true";
          attribute keep of start_s                       : signal is "true";
          attribute keep of finished_s                    : signal is "true";
@@ -497,9 +491,9 @@ begin  -- architecture rtl
 --                                                   BramVideoMemoryReadDataxD(2 downto 0) & "00000";
                                                    
                                                    
-         DataBramMV2HdmixAS : DataBramMV2HdmixD <= BramVideoMemoryReadDataxD(8 downto 1) & '0' &
-                                                   BramVideoMemoryReadDataxD(8 downto 1) & '0' &
-                                                   BramVideoMemoryReadDataxD(8 downto 1) & '0';
+         DataBramMV2HdmixAS : DataBramMV2HdmixD <= BramVideoMemoryReadDataxD(C_BRAM_VIDEO_MEMORY_DATA_SIZE-1 downto 1) & '0' &
+                                                   BramVideoMemoryReadDataxD(C_BRAM_VIDEO_MEMORY_DATA_SIZE-1 downto 1) & '0' &
+                                                   BramVideoMemoryReadDataxD(C_BRAM_VIDEO_MEMORY_DATA_SIZE-1 downto 1) & '0';
 
          BramVMRdAddrxAS : BramVideoMemoryReadAddrxD <= VCountxD((C_BRAM_VIDEO_MEMORY_HIGH_ADDR_SIZE - 1) downto 0) &
                                                         HCountxD((C_BRAM_VIDEO_MEMORY_LOW_ADDR_SIZE - 1) downto 0);
@@ -581,12 +575,13 @@ begin  -- architecture rtl
            
  
              -- RGB
-             BramVideoMemoryWriteDataxD <= iterations_s(8 downto 0)
+             BramVideoMemoryWriteDataxD <= iterations_s(C_BRAM_VIDEO_MEMORY_DATA_SIZE-1 downto 0);
 --           BramVideoMemoryWriteDataxD <= "000000111" when iterations_s = "0000000000000001" else  -- 1 bleu
 --             "111111111" when iterations_s = "0000000000000000" else -- 0 -> 111111111 -> 0x1ff blanc
 --             "000111000" when iterations_s = "0000000000000010" else -- 2 -> vert
 --             "111000111" when iterations_s = "0000000001100100" else -- 64 ->  111000111 -> 0x1c7 rose
 --             "111000000" ; -- others rouge
+
                                           
                                                                      
 
