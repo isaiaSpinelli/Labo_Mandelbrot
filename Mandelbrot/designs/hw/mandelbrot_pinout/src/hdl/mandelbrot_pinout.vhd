@@ -491,9 +491,9 @@ begin  -- architecture rtl
 --                                                   BramVideoMemoryReadDataxD(2 downto 0) & "00000";
                                                    
                                                    
-         DataBramMV2HdmixAS : DataBramMV2HdmixD <= BramVideoMemoryReadDataxD(C_BRAM_VIDEO_MEMORY_DATA_SIZE-1 downto 1) & '0' &
-                                                   BramVideoMemoryReadDataxD(C_BRAM_VIDEO_MEMORY_DATA_SIZE-1 downto 1) & '0' &
-                                                   BramVideoMemoryReadDataxD(C_BRAM_VIDEO_MEMORY_DATA_SIZE-1 downto 1) & '0';
+         DataBramMV2HdmixAS : DataBramMV2HdmixD <= BramVideoMemoryReadDataxD(C_BRAM_VIDEO_MEMORY_DATA_SIZE-3 downto 0) & '0' &
+                                                   BramVideoMemoryReadDataxD(C_BRAM_VIDEO_MEMORY_DATA_SIZE-3 downto 0) & '0' &
+                                                   BramVideoMemoryReadDataxD(C_BRAM_VIDEO_MEMORY_DATA_SIZE-3 downto 0) & '0';
 
          BramVMRdAddrxAS : BramVideoMemoryReadAddrxD <= VCountxD((C_BRAM_VIDEO_MEMORY_HIGH_ADDR_SIZE - 1) downto 0) &
                                                         HCountxD((C_BRAM_VIDEO_MEMORY_LOW_ADDR_SIZE - 1) downto 0);
