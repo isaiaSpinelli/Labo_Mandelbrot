@@ -95,8 +95,8 @@ process (ready, Etat_Present)
             -- 1        
             when next1 =>
                     
-                    nextValue_reg <= '1';
-  
+                    -- nextValue_reg <= '1';
+                    start_reg <= '1';
 
                     Etat_Futur <= next2;
             -- 2        
@@ -110,7 +110,8 @@ process (ready, Etat_Present)
               -- 3      
               when start1 =>
                     
-                    start_reg <= '1';
+                    -- start_reg <= '1';
+                    nextValue_reg <= '1';
                     Etat_Futur <= next1;
 
             when others =>

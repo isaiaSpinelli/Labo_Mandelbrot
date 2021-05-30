@@ -81,7 +81,7 @@ architecture Behavioral of mandelbrot_calculator is
     signal z_real_reg		   	       : std_logic_vector (SIZE+1 downto 0);
     signal z_imaginary_reg			   : std_logic_vector (SIZE downto 0);
     signal z_real_reg_p		   	       : std_logic_vector (SIZE+1 downto 0);
-    signal z_imaginary_reg_p			   : std_logic_vector (SIZE downto 0);
+    signal z_imaginary_reg_p		   : std_logic_vector (SIZE downto 0);
 
 
 	-- Gestion du compteur
@@ -102,8 +102,8 @@ architecture Behavioral of mandelbrot_calculator is
     signal Z_re_Z_im_2_p		   	       : std_logic_vector (SIZE-1 downto 0) ;
     signal Z_im_carre_p		   	       : std_logic_vector (SIZE-1 downto 0) ;
     
-    signal D_s                          : std_logic_vector (SIZE+3 downto 0) ;
-    signal D_s_p                          : std_logic_vector (SIZE+3 downto 0) ;
+    signal D_s                          : std_logic_vector (SIZE downto 0) ;
+    signal D_s_p                          : std_logic_vector (SIZE downto 0) ;
 
     
 	
@@ -174,7 +174,8 @@ process (start, Etat_Present,z_real_reg_p,z_imaginary_reg_p,z_real_carre_p,Z_re_
 	-- (idle, init, mul, add, test, finish )
 	
 	-- Variables
-	variable z_real_carre_32 : std_logic_vector ((SIZE*2)-1 downto 0);
+	variable z_real_carre_32   : std_logic_vector (SIZE-1 downto 0);
+	variable z_im_carre_32     : std_logic_vector (SIZE-1 downto 0);
 	
 	
 	begin
@@ -222,9 +223,9 @@ process (start, Etat_Present,z_real_reg_p,z_imaginary_reg_p,z_real_carre_p,Z_re_
                                         
                     -- faire les multiplications
                     
-                    z_real_carre        <= conv_std_logic_vector((signed(z_real_reg_p) * signed(z_real_reg_p)), SIZE*2)((SIZE*2)-1-4 downto 16-4);
-                    Z_re_Z_im_2         <= conv_std_logic_vector(((signed(z_real_reg_p) * signed(z_imaginary_reg_p)) & '0'), SIZE*2)((SIZE*2)-1-4 downto 16-4);
-                    Z_im_carre          <= conv_std_logic_vector((- (signed(z_imaginary_reg_p) * signed(z_imaginary_reg_p))), SIZE*2)((SIZE*2)-1-4 downto 16-4);
+                    z_real_carre        <= conv_std_logic_vector((signed(z_real_reg_p) * signed(z_real_reg_p)), SIZE*2)((SIZE-1+comma) downto comma);
+                    Z_re_Z_im_2         <= conv_std_logic_vector(((signed(z_real_reg_p) * signed(z_imaginary_reg_p)) & '0'), SIZE*2)((SIZE-1+comma) downto comma);
+                    Z_im_carre          <= conv_std_logic_vector((- (signed(z_imaginary_reg_p) * signed(z_imaginary_reg_p))), SIZE*2)((SIZE-1+comma) downto comma);
                 
                     Etat_Futur <= add;
               -- 3      
@@ -237,14 +238,17 @@ process (start, Etat_Present,z_real_reg_p,z_imaginary_reg_p,z_real_carre_p,Z_re_
                     Etat_Futur <= calulD;
              -- 4      
              when calulD =>
-                                  
-                    D_s             <= conv_std_logic_vector((signed(z_real_reg_p) + signed(z_imaginary_reg_p)), SIZE+4 );
+                     -- 12 + size -1 => SIZE-1+comma downto comma
+                    z_real_carre_32 := conv_std_logic_vector((signed(z_real_reg_p) * signed(z_real_reg_p)), SIZE*2) ((SIZE-1+comma) downto comma);
+                    z_im_carre_32   := conv_std_logic_vector((signed(z_imaginary_reg_p) * signed(z_imaginary_reg_p)), SIZE*2) ((SIZE-1+comma) downto comma);
+                    
+                    D_s             <= conv_std_logic_vector(unsigned(z_real_carre_32) + unsigned(z_im_carre_32), (SIZE+1));
                 
                     Etat_Futur <= test;
             -- 5        
             when test =>
                     
-                    if (D_s_p >= "00000100000000000000") then --  "0100000000000000" = 4 (Rayon^2)
+                    if (D_s_p >= "00000100000000000000" ) then --  "0100000000000000" = 4 (Rayon^2)   00000100000000000000  - X"00000000000004000"
                         Etat_Futur <= finish;
                     else 
                         -- TODO : Change constante to mxx_iter generique param

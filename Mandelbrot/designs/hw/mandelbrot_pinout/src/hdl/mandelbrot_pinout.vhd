@@ -494,6 +494,12 @@ begin  -- architecture rtl
          DataBramMV2HdmixAS : DataBramMV2HdmixD <= BramVideoMemoryReadDataxD(C_BRAM_VIDEO_MEMORY_DATA_SIZE-3 downto 0) & '0' &
                                                    BramVideoMemoryReadDataxD(C_BRAM_VIDEO_MEMORY_DATA_SIZE-3 downto 0) & '0' &
                                                    BramVideoMemoryReadDataxD(C_BRAM_VIDEO_MEMORY_DATA_SIZE-3 downto 0) & '0';
+                                                   
+--         DataBramMV2HdmixAS : DataBramMV2HdmixD <= "111111110000000000000000" when BramVideoMemoryReadDataxD = "000000000" else  -- 1 bleu
+--                BramVideoMemoryReadDataxD(C_BRAM_VIDEO_MEMORY_DATA_SIZE-3 downto 0) & '0' &
+--                BramVideoMemoryReadDataxD(C_BRAM_VIDEO_MEMORY_DATA_SIZE-3 downto 0) & '0' &
+--                BramVideoMemoryReadDataxD(C_BRAM_VIDEO_MEMORY_DATA_SIZE-3 downto 0) & '0';
+
 
          BramVMRdAddrxAS : BramVideoMemoryReadAddrxD <= VCountxD((C_BRAM_VIDEO_MEMORY_HIGH_ADDR_SIZE - 1) downto 0) &
                                                         HCountxD((C_BRAM_VIDEO_MEMORY_LOW_ADDR_SIZE - 1) downto 0);
@@ -575,12 +581,12 @@ begin  -- architecture rtl
            
  
              -- RGB
-             BramVideoMemoryWriteDataxD <= iterations_s(C_BRAM_VIDEO_MEMORY_DATA_SIZE-1 downto 0);
---           BramVideoMemoryWriteDataxD <= "000000111" when iterations_s = "0000000000000001" else  -- 1 bleu
---             "111111111" when iterations_s = "0000000000000000" else -- 0 -> 111111111 -> 0x1ff blanc
---             "000111000" when iterations_s = "0000000000000010" else -- 2 -> vert
---             "111000111" when iterations_s = "0000000001100100" else -- 64 ->  111000111 -> 0x1c7 rose
---             "111000000" ; -- others rouge
+            --BramVideoMemoryWriteDataxD <= iterations_s(C_BRAM_VIDEO_MEMORY_DATA_SIZE-1 downto 0);
+           BramVideoMemoryWriteDataxD <= "000000111" when iterations_s = "0000000000000001" else  -- 1 bleu
+             "111111111" when iterations_s = "0000000000000000" else -- 0 -> 111111111 -> 0x1ff blanc
+             "000111000" when iterations_s = "0000000000000010" else -- 2 -> vert
+             "111000111" when iterations_s = "0000000001100100" else -- 64 ->  111000111 -> 0x1c7 rose
+             "111000000" ; -- others rouge
 
                                           
                                                                      
@@ -588,7 +594,7 @@ begin  -- architecture rtl
 --         BramVMWrAddrxAS : BramVideoMemoryWriteAddrxD <= VCountIntxD((C_BRAM_VIDEO_MEMORY_HIGH_ADDR_SIZE - 1) downto 0) &
 --                                                         HCountIntxD((C_BRAM_VIDEO_MEMORY_LOW_ADDR_SIZE - 1) downto 0);
                                                          
-            BramVMWrAddrxAS : BramVideoMemoryWriteAddrxD <= std_logic_vector((unsigned(YScreen_s((C_BRAM_VIDEO_MEMORY_HIGH_ADDR_SIZE - 1) downto 0) & XScreen_s((C_BRAM_VIDEO_MEMORY_LOW_ADDR_SIZE - 1) downto 0))) - 1);
+            BramVMWrAddrxAS : BramVideoMemoryWriteAddrxD <= std_logic_vector(unsigned(YScreen_s((C_BRAM_VIDEO_MEMORY_HIGH_ADDR_SIZE - 1) downto 0) & XScreen_s((C_BRAM_VIDEO_MEMORY_LOW_ADDR_SIZE - 1) downto 0)));
                                                          
          BUFGClkSysToClkMandelxI : BUFG
              port map (
