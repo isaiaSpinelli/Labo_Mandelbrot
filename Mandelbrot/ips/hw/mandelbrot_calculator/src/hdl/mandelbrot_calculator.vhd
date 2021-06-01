@@ -21,7 +21,8 @@
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
-use ieee.STD_LOGIC_ARITH.all;
+-- use ieee.STD_LOGIC_ARITH.all;
+use ieee.numeric_std.all;
 
 -- Uncomment the following library declaration if using
 -- arithmetic functions with Signed or Unsigned values
@@ -51,256 +52,147 @@ end mandelbrot_calculator;
 
 architecture Behavioral of mandelbrot_calculator is
 
--- ANCIENNE METHODES
-----declaration internal signals 
--- signal Etat_Present, Etat_Futur : Std_Logic_Vector(2 downto 0);
- 
--- --Les constantes des états
--- --Etat start
--- constant Etat0_wait : Std_Logic_Vector(2 downto 0) := "000";
- 
--- constant Etat1_init   : Std_Logic_Vector(2 downto 0) := "001";
--- constant Etat2_mul    : Std_Logic_Vector(2 downto 0) := "010";
--- constant Etat3_add    : Std_Logic_Vector(2 downto 0) := "011";
--- constant Etat4_if     : Std_Logic_Vector(2 downto 0) := "100";
--- constant Etat5_finish : Std_Logic_Vector(2 downto 0) := "101";
-
--- NOUVELLE METHODE
-    type Etat is (idle, init, mul, add, calulD, test, finish );
+	--  Constants  
+	constant DOUBLE_SIZE : integer := 2*SIZE;
+	constant COMMA_HIGH  : integer := (SIZE+comma-1);
+	-- Valeur limite pour la comparaison (2^2 = 4)
+	constant val_limite : std_logic_vector(DOUBLE_SIZE-1 downto 0) := "00000100" & "000000000000000000000000";
+	
+	type Etat is (idle, calcul );
 	signal Etat_present, Etat_futur : Etat := idle;
+
 	
 	signal ready_reg                   : std_logic := '1'; 
-
+	signal finished_reg		           : std_logic := '0';
 	
 	
-	-- regsitres
-    signal save_info 			       : std_logic := '0'; 
-    signal c_real_reg		   	       : std_logic_vector (SIZE-1 downto 0);
-    signal c_imaginary_reg			   : std_logic_vector (SIZE-1 downto 0);
-    
-    signal z_real_reg		   	       : std_logic_vector (SIZE+1 downto 0);
-    signal z_imaginary_reg			   : std_logic_vector (SIZE downto 0);
-    signal z_real_reg_p		   	       : std_logic_vector (SIZE+1 downto 0);
-    signal z_imaginary_reg_p		   : std_logic_vector (SIZE downto 0);
-
-
-	-- Gestion du compteur
-	signal iterations_reg			   : std_logic_vector (SIZE-1 downto 0);
-	
-    signal iterations_count_next	   : unsigned (SIZE-1 downto 0) := (others => '0');
+	signal iterations_count_next	   : unsigned (SIZE-1 downto 0) := (others => '0');
     signal iterations_count		       : unsigned (SIZE-1 downto 0) := (others => '0');
-    signal en_cpt_s 			       : std_logic := '0'; 
-    signal load_cpt_s 			       : std_logic := '0'; 
-    
-    --signal z_real_fut_reg		   	       : std_logic_vector (SIZE-1 downto 0);
-    --signal z_imaginary_fut_reg			   : std_logic_vector (SIZE-1 downto 0);
-    
-    signal z_real_carre		   	       : std_logic_vector (SIZE-1 downto 0) ;
-    signal Z_re_Z_im_2		   	       : std_logic_vector (SIZE-1 downto 0) ;
-    signal Z_im_carre		   	       : std_logic_vector (SIZE-1 downto 0) ;
-    signal z_real_carre_p		   	       : std_logic_vector (SIZE-1 downto 0) ;
-    signal Z_re_Z_im_2_p		   	       : std_logic_vector (SIZE-1 downto 0) ;
-    signal Z_im_carre_p		   	       : std_logic_vector (SIZE-1 downto 0) ;
-    
-    signal D_s                          : std_logic_vector (SIZE downto 0) ;
-    signal D_s_p                          : std_logic_vector (SIZE downto 0) ;
 
-    
-	
-	attribute mark_debug                                    : string;
-    attribute mark_debug of Etat_present                    : signal is "true";
-    attribute mark_debug of Etat_futur                      : signal is "true";
-    attribute mark_debug of rst                             : signal is "true";
-    
-    attribute mark_debug of save_info                       : signal is "true";
-    attribute mark_debug of c_real_reg                      : signal is "true";
-    attribute mark_debug of c_imaginary_reg                 : signal is "true";
-    attribute mark_debug of z_real_reg                      : signal is "true";
-    attribute mark_debug of z_imaginary_reg                 : signal is "true";
-    
-    attribute mark_debug of iterations_reg                  : signal is "true";
-    attribute mark_debug of en_cpt_s                        : signal is "true";
-    attribute mark_debug of load_cpt_s                      : signal is "true";
-    attribute mark_debug of z_real_carre                    : signal is "true";
-    attribute mark_debug of Z_re_Z_im_2                     : signal is "true";
-    attribute mark_debug of Z_im_carre                      : signal is "true";
-    attribute mark_debug of D_s                             : signal is "true";
-    
-    attribute keep                                      : string;
-    attribute keep of Etat_present                      : signal is "true";
-    attribute keep of Etat_futur                        : signal is "true";
-    attribute keep of rst                               : signal is "true";
-    
-    attribute keep of save_info                         : signal is "true";
-    attribute keep of c_real_reg                        : signal is "true";
-    attribute keep of c_imaginary_reg                   : signal is "true";
-    attribute keep of z_real_reg                        : signal is "true";
-    attribute keep of z_imaginary_reg                   : signal is "true";
-    
-    attribute keep of iterations_reg                    : signal is "true";
-    attribute keep of en_cpt_s                          : signal is "true";
-    attribute keep of load_cpt_s                        : signal is "true";
-    attribute keep of z_real_carre                      : signal is "true";
-    attribute keep of Z_re_Z_im_2                       : signal is "true";
-    attribute keep of Z_im_carre                        : signal is "true";
-    attribute keep of D_s                               : signal is "true";
-	
+
+
+
+	signal start_s			: std_logic;
+	signal z_real_s			: std_logic_vector(SIZE-1 downto 0);
+	signal z_imaginary_s	: std_logic_vector(SIZE-1 downto 0);
+
+
+	-- Signaux intermediaires pour les calculs
+	signal z_real2_s				: std_logic_vector(DOUBLE_SIZE-1 downto 0);
+	signal z_imaginary2_s			: std_logic_vector(DOUBLE_SIZE-1 downto 0);
+	signal z_real_x_imaginary_s		: std_logic_vector(DOUBLE_SIZE-1 downto 0);
+	signal z_2_real_x_imaginary_s	: std_logic_vector(DOUBLE_SIZE-1 downto 0);
+	signal z_real2_sub_imaginary2_s	: std_logic_vector(DOUBLE_SIZE-1 downto 0);
+	signal z_real2_add_imaginary2_s	: std_logic_vector(DOUBLE_SIZE-1 downto 0);
+	signal z_real_fut_s				: std_logic_vector(DOUBLE_SIZE-1 downto 0);
+	signal z_imaginary_fut_s		: std_logic_vector(DOUBLE_SIZE-1 downto 0);
+
+	-- Signaux pour de sorties des bascules
+	signal z_new_real_s				: std_logic_vector(SIZE-1 downto 0);
+	signal z_new_imaginary_s		: std_logic_vector(SIZE-1 downto 0);
+
+	-- Signaux de controle
+	signal calcul_en: std_logic;
+	signal calcul_rst: std_logic;
+
+	-- Signaux pour la machine d'etat
+	signal EtatPresent: std_logic;
+	signal EtatFutur: std_logic;
+
+-------------
+--	Begin  --
+-------------
 begin
 
-ready <= ready_reg;
+	z_real 		<= z_real_s;
+	z_imaginary <= z_imaginary_s;
+	
+
+combinatoire :
+process( all )
+-- c_real, c_imaginary, z_new_real_s, z_new_imaginary_s, z_real_s, z_imaginary_s, z_real_x_imaginary_s, z_real2_s, z_imaginary2_s, z_2_real_x_imaginary_s, z_real2_add_imaginary2_s, iterations_count, calcul_en, z_real2_sub_imaginary2_s
+	begin
+		--  Multiplexeur  --
+		z_real_s 		<= z_new_real_s;
+		z_imaginary_s 	<= z_new_imaginary_s;
+
+		--  Multiplicateurs  --
+		z_real2_s				<= std_logic_vector(signed(z_real_s) * signed(z_real_s));				-- ZR^2
+		z_imaginary2_s			<= std_logic_vector(signed(z_imaginary_s) * signed(z_imaginary_s));		-- ZI^2
+		z_real_x_imaginary_s	<= std_logic_vector(signed(z_real_s) * signed(z_imaginary_s));			-- ZR*ZI
+		z_2_real_x_imaginary_s	<= std_logic_vector(z_real_x_imaginary_s(DOUBLE_SIZE-2 downto 0) & '0');-- 2*ZR*ZI
+
+		--  Additionneurs - Soustracteurs  --
+		z_real2_sub_imaginary2_s 	<= std_logic_vector(signed(z_real2_s) - signed(z_imaginary2_s));	-- ZR^2-ZI^2
+		z_real2_add_imaginary2_s 	<= std_logic_vector(signed(z_real2_s) + signed(z_imaginary2_s));	-- ZR^2+ZI^2
+		z_real_fut_s				<= std_logic_vector(signed(z_real2_sub_imaginary2_s) + signed(c_real & "000000000000"));
+		z_imaginary_fut_s			<= std_logic_vector(signed(z_2_real_x_imaginary_s) + signed(c_imaginary & "000000000000"));
+		--iterations_count_next			<= std_logic_vector(signed(iterations_count) + 1);
+
+		--  Comparateurs  --
+		-- Valeurs plus grande que 2^2
+		if(unsigned(z_real2_add_imaginary2_s) > unsigned(val_limite)) then
+			finished_reg 	<= '1';
+		-- Fin des iterations
+		elsif(unsigned(iterations_count) >= max_iter) then
+			finished_reg 	<= '1';
+		else
+			finished_reg	<= '0';
+		end if;
+	end process;
+	
+	
+ready       <= ready_reg;
+finished	<= finished_reg;
 
 -- Reset ou met à jour l'état présent
 	Mem: process (clk, rst)
 	begin
 		if (rst = '1') then
-			Etat_Present <= idle;
+			Etat_present <= idle;
 		elsif rising_edge(clk) then
-			Etat_Present <= Etat_Futur;
-			
-			z_real_reg_p <= z_real_reg;
-            z_imaginary_reg_p <= z_imaginary_reg; 
-            z_real_carre_p <= z_real_carre;	
-            Z_re_Z_im_2_p <= Z_re_Z_im_2;	
-            Z_im_carre_p <= Z_im_carre;
-            D_s_p <= D_s;
+			Etat_present <= Etat_Futur ;
 		end if;
 	end process;
-	
-	
--- Gestion des sorties en fonction de l'état présent
--- Gestion des états futurs en fonction des entrées (sauf etat 4)
-Fut: 
-process (start, Etat_Present,z_real_reg_p,z_imaginary_reg_p,z_real_carre_p,Z_re_Z_im_2_p,Z_im_carre_p,D_s_p ) -- all / start, Etat_Present
-	-- (idle, init, mul, add, test, finish )
-	
-	-- Variables
-	variable z_real_carre_32   : std_logic_vector (SIZE-1 downto 0);
-	variable z_im_carre_32     : std_logic_vector (SIZE-1 downto 0);
-	
-	
+
+Fut:
+process(all) -- Etat_present, start, finished_reg, z_real_s, z_imaginary_s, iterations_count
+
 	begin
-	-- valeurs par défaut
-		Etat_Futur <= idle;
-		finished <= '0';
-		ready_reg <= '0';
-		
-		save_info <= '0';
-		
-		load_cpt_s <= '0';
-		en_cpt_s <= '0';
-		
-		-- garde son etat
-        z_real_reg <= z_real_reg_p;
-        z_imaginary_reg <= z_imaginary_reg_p; 
-        z_real_carre <= z_real_carre_p;	
-        Z_re_Z_im_2 <= Z_re_Z_im_2_p;	
-        Z_im_carre <= Z_im_carre_p;
-        D_s <= D_s_p;
-		
-		case Etat_Present is
-		      -- 0
-		      when idle =>
-		      
-		            ready_reg <= '1';
-    
-                    if (start = '1') then
-                        Etat_Futur <= init;
-                    else 
-                        Etat_Futur <= idle;
-                    end if;
-            -- 1        
-            when init =>
-                    
-                    -- save data
-                    save_info <= '1';
-                    load_cpt_s <= '1';
-                    z_real_reg      <= (others => '0');
-                    z_imaginary_reg <= (others => '0');
-                
-                    Etat_Futur <= mul;
-            -- 2        
-            when mul =>
-                                        
-                    -- faire les multiplications
-                    
-                    z_real_carre        <= conv_std_logic_vector((signed(z_real_reg_p) * signed(z_real_reg_p)), SIZE*2)((SIZE-1+comma) downto comma);
-                    Z_re_Z_im_2         <= conv_std_logic_vector(((signed(z_real_reg_p) * signed(z_imaginary_reg_p)) & '0'), SIZE*2)((SIZE-1+comma) downto comma);
-                    Z_im_carre          <= conv_std_logic_vector((- (signed(z_imaginary_reg_p) * signed(z_imaginary_reg_p))), SIZE*2)((SIZE-1+comma) downto comma);
-                
-                    Etat_Futur <= add;
-              -- 3      
-              when add =>
-                    
-                    en_cpt_s <= '1';
-                    z_real_reg      <= conv_std_logic_vector((signed(z_real_carre_p) + signed(Z_im_carre_p ) + signed(c_real_reg)), SIZE+2) ;
-                    z_imaginary_reg <= conv_std_logic_vector(signed(Z_re_Z_im_2_p) + signed(c_imaginary), SIZE+1);
-                
-                    Etat_Futur <= calulD;
-             -- 4      
-             when calulD =>
-                     -- 12 + size -1 => SIZE-1+comma downto comma
-                    z_real_carre_32 := conv_std_logic_vector((signed(z_real_reg_p) * signed(z_real_reg_p)), SIZE*2) ((SIZE-1+comma) downto comma);
-                    z_im_carre_32   := conv_std_logic_vector((signed(z_imaginary_reg_p) * signed(z_imaginary_reg_p)), SIZE*2) ((SIZE-1+comma) downto comma);
-                    
-                    D_s             <= conv_std_logic_vector(unsigned(z_real_carre_32) + unsigned(z_im_carre_32), (SIZE+1));
-                
-                    Etat_Futur <= test;
-            -- 5        
-            when test =>
-                    
-                    if (D_s_p >= "00000100000000000000" ) then --  "0100000000000000" = 4 (Rayon^2)   00000100000000000000  - X"00000000000004000"
-                        Etat_Futur <= finish;
-                    else 
-                        -- TODO : Change constante to mxx_iter generique param
-                        if (iterations_reg >= "0000000001100100") then -- "0000000001100100" = 100 iterations
-                            load_cpt_s <= '1'; -- retourne 0 
-                            Etat_Futur <= finish;
-                        else 
-                            Etat_Futur <= mul;
-                        end if;
-                    end if;
-                    
-                    
-           when finish =>
-                    finished <= '1';
-                    ready_reg <= '1';
-                
-                    Etat_Futur <= idle;
-                    
-            when others =>
-				Etat_Futur <= idle;
-			end case ;
-			
+		-- valeurs par défaut
+		Etat_futur        <= idle;
+		ready_reg  	      <= '0';
+
+		calcul_en 	       <= '0';
+		calcul_rst 		   <= '0';
+
+		case Etat_present is
+		      -- 0 -> en attente d'un nouveau calcul
+              when idle  =>
+				ready_reg  <= '1';
+				
+				-- start un new calcul -> reset les valeurs de base
+				if (start = '1') then
+					calcul_rst     <= '1';
+					Etat_futur     <= calcul;
+				else
+					Etat_futur     <= idle;
+				end if;
+
+			-- 1 -> en train de traiter un calcul 
+			when calcul  =>
+				if (finished_reg = '1') then
+					Etat_futur  	<= idle;
+				else
+					calcul_en       <= '1';
+					Etat_futur      <= calcul;
+				end if;
+
+			when others => 
+			     Etat_Futur <= idle;
+			     
+		end case;
 end process Fut;
-		
-		
--- Registre pour la lecture sychro (entrées)
-process(clk, rst)
-begin
-	if(rst = '1') then
-		c_real_reg <= (others => '0');
-		c_imaginary_reg <= (others => '0');
-	elsif(rising_edge(Clk)) then
-		if(save_info = '1') then
-			c_real_reg <= c_real;
-			c_imaginary_reg <= c_imaginary;
-		end if;
-	end if;
-end process;
-
--- Registre pour l'ecriture sychro (sorties)
-process(clk, rst)
-begin
-	if(rst = '1') then
-		z_real      <= (others => '0');
-		z_imaginary <= (others => '0');
-	elsif(rising_edge(Clk)) then
-		z_real        <= z_real_reg(SIZE-1 downto 0);
-		z_imaginary   <= z_imaginary_reg(SIZE-1 downto 0);
-	end if;
-end process;
-
-
 
 
 -- Compteur iterations (+1)
@@ -309,18 +201,22 @@ iterations_count_next <= iterations_count + 1;
 process(clk, rst)
 begin
 	if(rst = '1') then
-		iterations_count <= (others => '0');
+		iterations_count    <= (others => '0');
+		z_new_real_s		<= (others => '0');
+	    z_new_imaginary_s	<= (others => '0');
 	elsif(rising_edge(Clk)) then
-		if(load_cpt_s = '1') then
-			iterations_count <= (others => '0');
-		elsif (en_cpt_s = '1') then
-			iterations_count <= iterations_count_next;
+		if(calcul_rst = '1') then
+			iterations_count     <= (others => '0');
+			z_new_real_s		 <= (others => '0');
+			z_new_imaginary_s	 <= (others => '0');
+		elsif (calcul_en = '1') then
+			iterations_count     <= iterations_count_next;
+			z_new_real_s	 	 <= z_real_fut_s(COMMA_HIGH downto comma);
+			z_new_imaginary_s	 <= z_imaginary_fut_s(COMMA_HIGH downto comma);
 		end if;
 	end if;
 end process;
 
-iterations_reg  <=  std_logic_vector(iterations_count(SIZE-1 downto 0));
 iterations      <= std_logic_vector(iterations_count(SIZE-1 downto 0));
-
 
 end Behavioral;

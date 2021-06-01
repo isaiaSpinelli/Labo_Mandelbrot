@@ -62,6 +62,7 @@ end entity mandelbrot_pinout;
 architecture rtl of mandelbrot_pinout is
 
     -- Constants
+    constant MAX_ITER : integer := 100;
 
     ---------------------------------------------------------------------------
     -- Resolution configuration
@@ -495,7 +496,7 @@ begin  -- architecture rtl
                                                    BramVideoMemoryReadDataxD(C_BRAM_VIDEO_MEMORY_DATA_SIZE-3 downto 0) & '0' &
                                                    BramVideoMemoryReadDataxD(C_BRAM_VIDEO_MEMORY_DATA_SIZE-3 downto 0) & '0';
                                                    
---         DataBramMV2HdmixAS : DataBramMV2HdmixD <= "111111110000000000000000" when BramVideoMemoryReadDataxD = "000000000" else  -- 1 bleu
+--         DataBramMV2HdmixAS : DataBramMV2HdmixD <= "111111110000000000000000" when (unsigned(BramVideoMemoryReadDataxD) >= MAX_ITER) else  -- 1 rouge
 --                BramVideoMemoryReadDataxD(C_BRAM_VIDEO_MEMORY_DATA_SIZE-3 downto 0) & '0' &
 --                BramVideoMemoryReadDataxD(C_BRAM_VIDEO_MEMORY_DATA_SIZE-3 downto 0) & '0' &
 --                BramVideoMemoryReadDataxD(C_BRAM_VIDEO_MEMORY_DATA_SIZE-3 downto 0) & '0';
@@ -581,12 +582,12 @@ begin  -- architecture rtl
            
  
              -- RGB
-            --BramVideoMemoryWriteDataxD <= iterations_s(C_BRAM_VIDEO_MEMORY_DATA_SIZE-1 downto 0);
-           BramVideoMemoryWriteDataxD <= "000000111" when iterations_s = "0000000000000001" else  -- 1 bleu
-             "111111111" when iterations_s = "0000000000000000" else -- 0 -> 111111111 -> 0x1ff blanc
-             "000111000" when iterations_s = "0000000000000010" else -- 2 -> vert
-             "111000111" when iterations_s = "0000000001100100" else -- 64 ->  111000111 -> 0x1c7 rose
-             "111000000" ; -- others rouge
+            BramVideoMemoryWriteDataxD <= iterations_s(C_BRAM_VIDEO_MEMORY_DATA_SIZE-1 downto 0);
+--           BramVideoMemoryWriteDataxD <= "000000111" when iterations_s = "0000000000000001" else  -- 1 bleu
+--             "111111111" when iterations_s = "0000000000000000" else -- 0 -> 111111111 -> 0x1ff blanc
+--             "000111000" when iterations_s = "0000000000000010" else -- 2 -> vert
+--             "111000111" when iterations_s = "0000000001100100" else -- 64 ->  111000111 -> 0x1c7 rose
+--             "111000000" ; -- others rouge
 
                                           
                                                                      
@@ -657,7 +658,7 @@ begin  -- architecture rtl
         mandelbrot_calculator : entity work.mandelbrot_calculator
             generic map (
                 comma           => 12,
-                max_iter        => 100 , 
+                max_iter        => MAX_ITER , 
                 SIZE            => C_DATA_SIZE  )  
             port map (
                 clk             => ClkMandelxC ,
