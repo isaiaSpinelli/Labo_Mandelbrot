@@ -1,6 +1,14 @@
-import struct
+# Spinelli Isaia
+# LPSC - mandelbrot
 
-import numpy as np
+# ----- CONSTANTES -----
+
+ITER_MAX = 100
+RADIUS_MAX  = 2
+
+C_RE = 0.00390625
+C_IM = 0.31640625
+
 
 def print_hi(name):
     # Use a breakpoint in the code line below to debug your script.
@@ -11,24 +19,15 @@ def print_hi(name):
 if __name__ == '__main__':
     print_hi('PyCharm')
 
-    num_iter = 100
-
-    # 14.58203125 -  0.25
-    c_real = 0.00390625
-    # 0.47021484375 -  0.25
-    c_imag = 0.31640625
     z_real = 0
     z_imag = 0
 
-    for i in range(num_iter):
-        z_real_new = z_real ** 2 - z_imag ** 2 + c_real
-        z_imag_new = z_imag * 2 * z_real + c_imag
+    for i in range(ITER_MAX):
+        z_real = (z_real ** 2) - (z_imag ** 2) + (C_RE)
+        z_imag = (2 * z_imag * z_real) + C_IM
+        print("it n°", i, " : z_real = ", z_real, " (", float.hex(z_real),
+              ") // z_imag = ", z_imag, " (", float.hex(z_imag), ")")
 
-        z_real = z_real_new
-        z_imag = z_imag_new
-        print("iteration n°", i, " : z_real = ", z_real, " (", float.hex(z_real),
-              ") ; z_imag = ", z_imag, " (", float.hex(z_imag), ")")
-
-        if ((z_real ** 2 + z_imag ** 2) >= 4):
-            print("\n        after ", i, "bigger than radius")
+        if ((z_real ** 2 + z_imag ** 2) >= (RADIUS_MAX ** 2)):
+            print("\n after ", i, "bigger than radius")
             break
