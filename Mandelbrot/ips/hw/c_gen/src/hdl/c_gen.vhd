@@ -17,6 +17,7 @@
 -- Revisions  :
 -- Date        Version  Author  Description
 -- 16.04.2018   0.0      SCJ      Created
+-- 18.05.2021   0.1      ISS      add nextValue link
 -------------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
